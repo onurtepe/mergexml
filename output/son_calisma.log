@@ -1,6 +1,6 @@
-[2026-04-09T11:30:37.795Z] === Stok Merger başlatıldı ===
-[2026-04-09T11:30:37.798Z] Firma A çekiliyor: https://api.akdenizerp.com/xml/xmlweb.xml
-[2026-04-09T11:30:41.149Z] Firma A (akdeniz): 1105 kayıt parse edildi
-[2026-04-09T11:30:41.149Z] Firma B çekiliyor: https://www.promolife.com.tr/xml_all/product.xml
-[2026-04-09T11:30:43.695Z] Firma B (promolife): 1129 kayıt parse edildi
-[2026-04-09T11:30:43.716Z] Çıktı kaydedildi: output/birlesik_stok.xml (1547.8 KB)
+[2026-04-09T12:01:43.726Z] === Stok Merger başlatıldı ===
+[2026-04-09T12:01:43.729Z] Firma A çekiliyor: https://api.akdenizerp.com/xml/xmlweb.xml
+[2026-04-09T12:01:47.086Z] Firma A (akdeniz): 1105 kayıt parse edildi
+[2026-04-09T12:01:47.086Z] Firma B çekiliyor: https://www.promolife.com.tr/xml_all/product.xml
+[2026-04-09T12:01:49.720Z] Firma B (promolife): 1129 kayıt parse edildi
+[2026-04-09T12:01:49.743Z] Çıktı kaydedildi: output/birlesik_stok.xml (2450.0 KB)
