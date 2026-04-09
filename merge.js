@@ -8,12 +8,12 @@ const path  = require('path');
 // ============================================================
 const CONFIG = {
   firma_a: {
-    url: 'https://FIRMA-A-URL/stok.xml',   // <-- değiştir
-    ad:  'Firma_A',
+    url: 'https://api.akdenizerp.com/xml/xmlweb.xml',   // <-- değiştir
+    ad:  'akdeniz',
   },
   firma_b: {
-    url: 'https://FIRMA-B-URL/stok.xml',   // <-- değiştir
-    ad:  'Firma_B',
+    url: 'https://www.promolife.com.tr/xml_all/product.xml',   // <-- değiştir
+    ad:  'promolife',
   },
   ciktiDosyasi: 'output/birlesik_stok.xml',
   logDosyasi:   'output/son_calisma.log',
