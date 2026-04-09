@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Oluşturulma: 2026-04-09T11:18:49.508Z -->
+<!-- akdeniz: 0 kayıt | promolife: 0 kayıt | Toplam: 0 -->
+<stok_raporu>
+
+  <meta>
+    <olusturulma>2026-04-09T11:18:49.508Z</olusturulma>
+    <firma_a_kayit_sayisi>0</firma_a_kayit_sayisi>
+    <firma_b_kayit_sayisi>0</firma_b_kayit_sayisi>
+    <toplam_kayit>0</toplam_kayit>
+  </meta>
+
+  <akdeniz>
+  </akdeniz>
+
+  <promolife>
+  </promolife>
+
+</stok_raporu>

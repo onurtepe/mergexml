@@ -1,0 +1,6 @@
+[2026-04-09T11:18:43.847Z] === Stok Merger başlatıldı ===
+[2026-04-09T11:18:43.850Z] Firma A çekiliyor: https://api.akdenizerp.com/xml/xmlweb.xml
+[2026-04-09T11:18:47.017Z] Firma A: 0 kayıt parse edildi
+[2026-04-09T11:18:47.017Z] Firma B çekiliyor: https://www.promolife.com.tr/xml_all/product.xml
+[2026-04-09T11:18:49.508Z] Firma B: 0 kayıt parse edildi
+[2026-04-09T11:18:49.509Z] Çıktı kaydedildi: output/birlesik_stok.xml (0.4 KB)
