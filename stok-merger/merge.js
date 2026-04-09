@@ -8,12 +8,12 @@ const path = require('path');
 // ============================================================
 const CONFIG = {
   firma_a: {
-    url: 'https://FIRMA-A-URL/stok.xml',   // <-- değiştir
-    ad:  'Firma A',
+    url: 'https://api.akdenizerp.com/xml/xmlweb.xml',   // <-- değiştir
+    ad:  'akdeniz',
   },
   firma_b: {
-    url: 'https://FIRMA-B-URL/stok.xml',   // <-- değiştir
-    ad:  'Firma B',
+    url: 'https://www.promolife.com.tr/xml_all/product.xml',   // <-- değiştir
+    ad:  'promo',
   },
 
   // XML'deki barkod/kod etiketi (öncelik sırasıyla dener)
