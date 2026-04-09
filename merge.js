@@ -20,7 +20,7 @@ const CONFIG = {
 };
 // ============================================================
 
-// ---- HTTP çekici (redirect destekli) ----------------------
+// ---- HTTP çekici ------------------------------------------
 function fetchURL(url, yonlendirmeSayisi) {
   yonlendirmeSayisi = yonlendirmeSayisi || 0;
   if (yonlendirmeSayisi > 5) return Promise.reject(new Error('Çok fazla yönlendirme'));
@@ -38,111 +38,129 @@ function fetchURL(url, yonlendirmeSayisi) {
   });
 }
 
-// ---- Tek etiket değeri (CDATA + HTML entity decode) -------
+// ---- Tek etiket değeri (CDATA + entity decode) ------------
 function etiketDegeri(blok, etiket) {
   var re = new RegExp('<' + etiket + '[^>]*>\\s*(?:<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>|([^<]*))\\s*</' + etiket + '>', 'i');
   var m = blok.match(re);
   if (!m) return '';
   var val = (m[1] !== undefined ? m[1] : (m[2] || '')).trim();
-  // HTML entity decode
   val = val.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&apos;/g,"'");
   return val;
 }
 
-// ---- RECORD formatı parse (her iki firma için ortak) ------
-function parseRecords(xmlStr, firmAdi) {
+// ---- Firma A parse: <RECORD> formatı ----------------------
+function parseA(xmlStr) {
   var urunler = [];
-
-  // Önce RECORD bloklarını bul
   var blokRe = /<RECORD>([\s\S]*?)<\/RECORD>/gi;
   var m;
-  var bloklar = [];
-  while ((m = blokRe.exec(xmlStr)) !== null) bloklar.push(m[0]);
-
-  if (bloklar.length === 0) {
-    // Alternatif: küçük harf <record>
-    blokRe = /<record>([\s\S]*?)<\/record>/gi;
-    while ((m = blokRe.exec(xmlStr)) !== null) bloklar.push(m[0]);
-  }
-
-  bloklar.forEach(function(blok) {
+  while ((m = blokRe.exec(xmlStr)) !== null) {
+    var b = m[0];
     urunler.push({
-      urunID:      etiketDegeri(blok, 'urun_id'),
-      urunKodu:    etiketDegeri(blok, 'urunkodu'),
-      urunAttrID:  etiketDegeri(blok, 'urunattr_id'),
-      urunAttrGr:  etiketDegeri(blok, 'urunattrgr'),
-      urunAttrAdi: etiketDegeri(blok, 'urunattradi'),
-      urunAdi:     etiketDegeri(blok, 'urunadi'),
-      aciklama:    etiketDegeri(blok, 'urunaciklamasi'),
-      kategori:    etiketDegeri(blok, 'kategori'),
-      stokResim:   etiketDegeri(blok, 'stokresim'),
-      urunResim:   etiketDegeri(blok, 'urunresim'),
-      urunResim1:  etiketDegeri(blok, 'urunresim1'),
-      urunResim2:  etiketDegeri(blok, 'urunresim2'),
-      urunResim3:  etiketDegeri(blok, 'urunresim3'),
-      urunResim4:  etiketDegeri(blok, 'urunresim4'),
-      stokTag:     etiketDegeri(blok, 'stoktag'),
-      firma:       firmAdi,
+      kaynak:     CONFIG.firma_a.ad,
+      urun_id:    etiketDegeri(b, 'urun_id'),
+      urunkodu:   etiketDegeri(b, 'urunkodu'),
+      grup_kodu:  etiketDegeri(b, 'urunattrgr'),
+      varyant_id: etiketDegeri(b, 'urunattr_id'),
+      varyant_adi:etiketDegeri(b, 'urunattradi'),
+      urunadi:    etiketDegeri(b, 'urunadi'),
+      aciklama:   etiketDegeri(b, 'urunaciklamasi'),
+      kategori:   etiketDegeri(b, 'kategori'),
+      stok:       '',
+      stok_birim: '',
+      fiyat:      '',
+      fiyat_birim:'',
+      kdv:        '',
+      resim1:     etiketDegeri(b, 'stokresim'),
+      resim2:     etiketDegeri(b, 'urunresim'),
+      resim3:     etiketDegeri(b, 'urunresim1'),
+      resim4:     etiketDegeri(b, 'urunresim2'),
+      resim5:     etiketDegeri(b, 'urunresim3'),
+      resim6:     etiketDegeri(b, 'urunresim4'),
+      site_url:   '',
+      stoktag:    etiketDegeri(b, 'stoktag'),
     });
-  });
-
+  }
   return urunler;
 }
 
-// ---- Promolife <Urun> formatı parse -----------------------
-function parseUrun(xmlStr, firmAdi) {
+// ---- Firma B parse: <Urun> formatı ------------------------
+function parseB(xmlStr) {
   var urunler = [];
   var blokRe = /<Urun>([\s\S]*?)<\/Urun>/gi;
   var m;
-
   while ((m = blokRe.exec(xmlStr)) !== null) {
-    var blok = m[0];
+    var b = m[0];
 
-    var urunID     = etiketDegeri(blok, 'UrunID');
-    var urunKod    = etiketDegeri(blok, 'UrunKod');
-    var urunAd     = etiketDegeri(blok, 'UrunAd');
-    var aciklama   = etiketDegeri(blok, 'UrunAciklama');
-    var kategori   = etiketDegeri(blok, 'UrunKategoriID');
-    var resim      = etiketDegeri(blok, 'UrunResim1URL');
-    var siteURL    = etiketDegeri(blok, 'UrunSiteURL');
-    var fiyat      = etiketDegeri(blok, 'UrunFiyat');
-    var fiyatBirim = etiketDegeri(blok, 'UrunFiyatBirim');
-    var kdv        = etiketDegeri(blok, 'UrunFiyatKDV');
-    var toplamStok = etiketDegeri(blok, 'UrunToplamStok');
-    var stokBirim  = etiketDegeri(blok, 'UrunToplamStokBirim');
+    var urunID     = etiketDegeri(b, 'UrunID');
+    var urunKod    = etiketDegeri(b, 'UrunKod');
+    var urunAd     = etiketDegeri(b, 'UrunAd');
+    var aciklama   = etiketDegeri(b, 'UrunAciklama');
+    var kategori   = etiketDegeri(b, 'UrunKategoriID');
+    var resim1     = etiketDegeri(b, 'UrunResim1URL');
+    var siteURL    = etiketDegeri(b, 'UrunSiteURL');
+    var fiyat      = etiketDegeri(b, 'UrunFiyat');
+    var fiyatBirim = etiketDegeri(b, 'UrunFiyatBirim');
+    var kdv        = etiketDegeri(b, 'UrunFiyatKDV');
+    var toplamStok = etiketDegeri(b, 'UrunToplamStok');
+    var stokBirim  = etiketDegeri(b, 'UrunToplamStokBirim');
 
+    // Seçenekler (varyantlar) — her biri ayrı kayıt
     var secenekRe = /<Secenek>([\s\S]*?)<\/Secenek>/gi;
     var sm;
     var secenekler = [];
-    while ((sm = secenekRe.exec(blok)) !== null) secenekler.push(sm[0]);
+    while ((sm = secenekRe.exec(b)) !== null) secenekler.push(sm[0]);
 
     if (secenekler.length > 0) {
       secenekler.forEach(function(s) {
         urunler.push({
-          urunID:      urunID,
-          urunKodu:    etiketDegeri(s, 'SecenekKod') || urunKod,
-          grupKod:     etiketDegeri(s, 'GrupKod'),
-          secenekID:   etiketDegeri(s, 'SecenekID'),
-          urunAdi:     urunAd,
+          kaynak:      CONFIG.firma_b.ad,
+          urun_id:     urunID,
+          urunkodu:    etiketDegeri(s, 'SecenekKod') || urunKod,
+          grup_kodu:   etiketDegeri(s, 'GrupKod'),
+          varyant_id:  etiketDegeri(s, 'SecenekID'),
+          varyant_adi: etiketDegeri(s, 'SecenekKod') || urunKod,
+          urunadi:     urunAd,
           aciklama:    aciklama,
           kategori:    kategori,
           stok:        etiketDegeri(s, 'SecenekToplamStok') || toplamStok,
-          stokBirim:   stokBirim,
+          stok_birim:  stokBirim,
           fiyat:       fiyat,
-          fiyatBirim:  fiyatBirim,
+          fiyat_birim: fiyatBirim,
           kdv:         kdv,
-          resim:       resim,
-          siteURL:     siteURL,
-          firma:       firmAdi,
+          resim1:      resim1,
+          resim2:      '',
+          resim3:      '',
+          resim4:      '',
+          resim5:      '',
+          resim6:      '',
+          site_url:    siteURL,
+          stoktag:     '',
         });
       });
     } else {
       urunler.push({
-        urunID: urunID, urunKodu: urunKod, grupKod: '', secenekID: '',
-        urunAdi: urunAd, aciklama: aciklama, kategori: kategori,
-        stok: toplamStok, stokBirim: stokBirim,
-        fiyat: fiyat, fiyatBirim: fiyatBirim, kdv: kdv,
-        resim: resim, siteURL: siteURL, firma: firmAdi,
+        kaynak:      CONFIG.firma_b.ad,
+        urun_id:     urunID,
+        urunkodu:    urunKod,
+        grup_kodu:   '',
+        varyant_id:  '',
+        varyant_adi: '',
+        urunadi:     urunAd,
+        aciklama:    aciklama,
+        kategori:    kategori,
+        stok:        toplamStok,
+        stok_birim:  stokBirim,
+        fiyat:       fiyat,
+        fiyat_birim: fiyatBirim,
+        kdv:         kdv,
+        resim1:      resim1,
+        resim2:      '',
+        resim3:      '',
+        resim4:      '',
+        resim5:      '',
+        resim6:      '',
+        site_url:    siteURL,
+        stoktag:     '',
       });
     }
   }
@@ -150,81 +168,66 @@ function parseUrun(xmlStr, firmAdi) {
 }
 
 // ---- XML formatını otomatik tespit et ---------------------
-function parseXML(xmlStr, firmAdi) {
-  // RECORD formatı mı?
-  if (/<RECORD>/i.test(xmlStr)) {
-    return parseRecords(xmlStr, firmAdi);
-  }
-  // Urun formatı mı?
-  if (/<Urun>/i.test(xmlStr)) {
-    return parseUrun(xmlStr, firmAdi);
-  }
+function parseXML(xmlStr, firma) {
+  if (/<RECORD>/i.test(xmlStr)) return parseA(xmlStr);
+  if (/<Urun>/i.test(xmlStr))   return parseB(xmlStr);
   return [];
 }
 
 // ---- XML karakter kaçış -----------------------------------
 function esc(s) {
-  return (s || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ---- Birleşik XML oluştur ---------------------------------
-function xmlOlustur(listA, listB) {
+function xmlOlustur(liste) {
   var simdi = new Date().toISOString();
-
-  function yazUrun(u, idx) {
-    var satirlar = [];
-    satirlar.push('    <urun id="' + (idx + 1) + '">');
-    if (u.urunID)      satirlar.push('      <urun_id>'    + esc(u.urunID)      + '</urun_id>');
-    if (u.urunKodu)    satirlar.push('      <urunkodu>'   + esc(u.urunKodu)    + '</urunkodu>');
-    if (u.grupKod)     satirlar.push('      <grup_kod>'   + esc(u.grupKod)     + '</grup_kod>');
-    if (u.secenekID)   satirlar.push('      <secenek_id>' + esc(u.secenekID)   + '</secenek_id>');
-    if (u.urunAttrID)  satirlar.push('      <urunattr_id>'+ esc(u.urunAttrID)  + '</urunattr_id>');
-    if (u.urunAttrGr)  satirlar.push('      <urunattrgr>' + esc(u.urunAttrGr)  + '</urunattrgr>');
-    if (u.urunAttrAdi) satirlar.push('      <urunattradi><![CDATA[' + u.urunAttrAdi + ']]></urunattradi>');
-    if (u.urunAdi)     satirlar.push('      <urunadi><![CDATA['     + u.urunAdi     + ']]></urunadi>');
-    if (u.kategori)    satirlar.push('      <kategori><![CDATA['    + u.kategori    + ']]></kategori>');
-    if (u.stok)        satirlar.push('      <stok>'       + esc(u.stok)        + '</stok>');
-    if (u.stokBirim)   satirlar.push('      <stok_birim>' + esc(u.stokBirim)   + '</stok_birim>');
-    if (u.fiyat)       satirlar.push('      <fiyat>'      + esc(u.fiyat)       + '</fiyat>');
-    if (u.fiyatBirim)  satirlar.push('      <fiyat_birim>'+ esc(u.fiyatBirim)  + '</fiyat_birim>');
-    if (u.kdv)         satirlar.push('      <kdv>'        + esc(u.kdv)         + '</kdv>');
-    if (u.stokResim)   satirlar.push('      <stokresim>'  + esc(u.stokResim)   + '</stokresim>');
-    if (u.urunResim)   satirlar.push('      <urunresim>'  + esc(u.urunResim)   + '</urunresim>');
-    if (u.urunResim1)  satirlar.push('      <urunresim1>' + esc(u.urunResim1)  + '</urunresim1>');
-    if (u.urunResim2)  satirlar.push('      <urunresim2>' + esc(u.urunResim2)  + '</urunresim2>');
-    if (u.urunResim3)  satirlar.push('      <urunresim3>' + esc(u.urunResim3)  + '</urunresim3>');
-    if (u.urunResim4)  satirlar.push('      <urunresim4>' + esc(u.urunResim4)  + '</urunresim4>');
-    if (u.resim)       satirlar.push('      <resim>'      + esc(u.resim)       + '</resim>');
-    if (u.siteURL)     satirlar.push('      <site_url>'   + esc(u.siteURL)     + '</site_url>');
-    if (u.stokTag)     satirlar.push('      <stoktag><![CDATA[' + u.stokTag + ']]></stoktag>');
-    satirlar.push('    </urun>');
-    return satirlar.join('\n');
-  }
+  var toplamA = liste.filter(function(u){ return u.kaynak === CONFIG.firma_a.ad; }).length;
+  var toplamB = liste.filter(function(u){ return u.kaynak === CONFIG.firma_b.ad; }).length;
 
   var out = [];
   out.push('<?xml version="1.0" encoding="UTF-8"?>');
   out.push('<!-- Oluşturulma: ' + simdi + ' -->');
-  out.push('<!-- ' + CONFIG.firma_a.ad + ': ' + listA.length + ' kayıt | ' + CONFIG.firma_b.ad + ': ' + listB.length + ' kayıt | Toplam: ' + (listA.length + listB.length) + ' -->');
+  out.push('<!-- ' + CONFIG.firma_a.ad + ': ' + toplamA + ' kayıt | ' + CONFIG.firma_b.ad + ': ' + toplamB + ' kayıt | Toplam: ' + liste.length + ' -->');
   out.push('<stok_raporu>');
   out.push('');
   out.push('  <meta>');
-  out.push('    <olusturulma>' + simdi + '</olusturulma>');
-  out.push('    <firma_a_kayit_sayisi>' + listA.length + '</firma_a_kayit_sayisi>');
-  out.push('    <firma_b_kayit_sayisi>' + listB.length + '</firma_b_kayit_sayisi>');
-  out.push('    <toplam_kayit>' + (listA.length + listB.length) + '</toplam_kayit>');
+  out.push('    <olusturulma>'         + simdi      + '</olusturulma>');
+  out.push('    <firma_a_kayit_sayisi>'+ toplamA    + '</firma_a_kayit_sayisi>');
+  out.push('    <firma_b_kayit_sayisi>'+ toplamB    + '</firma_b_kayit_sayisi>');
+  out.push('    <toplam_kayit>'        + liste.length + '</toplam_kayit>');
   out.push('  </meta>');
   out.push('');
-  out.push('  <' + CONFIG.firma_a.ad + '>');
-  listA.forEach(function(u, i) { out.push(yazUrun(u, i)); });
-  out.push('  </' + CONFIG.firma_a.ad + '>');
-  out.push('');
-  out.push('  <' + CONFIG.firma_b.ad + '>');
-  listB.forEach(function(u, i) { out.push(yazUrun(u, i)); });
-  out.push('  </' + CONFIG.firma_b.ad + '>');
+  out.push('  <urunler>');
+
+  liste.forEach(function(u, i) {
+    out.push('    <urun id="' + (i + 1) + '">');
+    out.push('      <kaynak>'      + esc(u.kaynak)      + '</kaynak>');
+    out.push('      <urun_id>'     + esc(u.urun_id)     + '</urun_id>');
+    out.push('      <urunkodu><![CDATA['    + (u.urunkodu    || '') + ']]></urunkodu>');
+    out.push('      <grup_kodu><![CDATA['   + (u.grup_kodu   || '') + ']]></grup_kodu>');
+    out.push('      <varyant_id>'   + esc(u.varyant_id)  + '</varyant_id>');
+    out.push('      <varyant_adi><![CDATA[' + (u.varyant_adi || '') + ']]></varyant_adi>');
+    out.push('      <urunadi><![CDATA['     + (u.urunadi     || '') + ']]></urunadi>');
+    out.push('      <aciklama><![CDATA['    + (u.aciklama    || '') + ']]></aciklama>');
+    out.push('      <kategori><![CDATA['    + (u.kategori    || '') + ']]></kategori>');
+    out.push('      <stok>'         + esc(u.stok)        + '</stok>');
+    out.push('      <stok_birim>'   + esc(u.stok_birim)  + '</stok_birim>');
+    out.push('      <fiyat>'        + esc(u.fiyat)       + '</fiyat>');
+    out.push('      <fiyat_birim>'  + esc(u.fiyat_birim) + '</fiyat_birim>');
+    out.push('      <kdv>'          + esc(u.kdv)         + '</kdv>');
+    out.push('      <resim1>'       + esc(u.resim1)      + '</resim1>');
+    out.push('      <resim2>'       + esc(u.resim2)      + '</resim2>');
+    out.push('      <resim3>'       + esc(u.resim3)      + '</resim3>');
+    out.push('      <resim4>'       + esc(u.resim4)      + '</resim4>');
+    out.push('      <resim5>'       + esc(u.resim5)      + '</resim5>');
+    out.push('      <resim6>'       + esc(u.resim6)      + '</resim6>');
+    out.push('      <site_url>'     + esc(u.site_url)    + '</site_url>');
+    out.push('      <stoktag><![CDATA[' + (u.stoktag || '') + ']]></stoktag>');
+    out.push('    </urun>');
+  });
+
+  out.push('  </urunler>');
   out.push('');
   out.push('</stok_raporu>');
   return out.join('\n');
@@ -263,12 +266,10 @@ async function main() {
     process.exit(1);
   }
 
-  if (listA.length === 0 && listB.length === 0) {
-    log('UYARI: Her iki firmadan da 0 kayıt geldi. XML yapısı tanınamadı.');
-    log('İpucu: XML dosyasının ilk 200 karakterini kontrol et.');
-  }
+  // İki listeyi birleştir: önce A, sonra B
+  var birlesik = listA.concat(listB);
 
-  var xmlCikti = xmlOlustur(listA, listB);
+  var xmlCikti = xmlOlustur(birlesik);
 
   fs.mkdirSync(path.dirname(CONFIG.ciktiDosyasi), { recursive: true });
   fs.writeFileSync(CONFIG.ciktiDosyasi, xmlCikti, 'utf8');
